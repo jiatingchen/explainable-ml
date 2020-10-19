@@ -1,0 +1,59 @@
+---
+title: "explainable ML section 3"
+author: "Kristin Chen"
+date: "10/15/2020"
+output: beamer_presentation
+---
+
+## Introduction
+- machine learning: An algorithm trains a model that produces the predictions.
+    - We capture the world by collecting data, and abstract it further by learning to predict the data (for the task) with a machine learning model. Interpretability is just another layer on top that helps humans understand.
+![big-picture](H:/explainable-ml/big-picture.png)
+- why interpretability is important?
+- how to interpret: to explain a ML model, you need the trained model, knowledge of the algorithm and the data.
+
+## Taxonomy of interpretability
+- intrinsic vs post-hoc: interpretability is achieved 
+    - intrinsic: by restricting the complexity of the machine learning model that are considered interpretable due to their simple structure, such as short decision trees or sparse linear models. 
+    - post-hoc: by applying methods that analyze the model after training
+    
+- results of interpretation methods:
+    - feature summary statistic: provide summary statistics for each feature. Some methods return a single number per feature, such as feature importance, or a more complex result, such as the pairwise feature interaction strengths, which consist of a number for each feature pair.
+    - feature summary visualization: some feature summaries are actually only meaningful if they are visualized. Partial dependence plots are curves that show a feature and the average predicted outcome.
+    - Model internals: The interpretation of intrinsically interpretable models, such as weights in linear models or the learned tree structure (the features and thresholds used for the splits) of decision trees.
+    - data point: includes all methods that return data points (already existent or newly created) to make a model interpretable, i.e. counterfactual explanations, which refers to explain the prediction of a data instance, the method finds a similar data point by changing some of the features for which the predicted outcome changes in a relevant way (e.g. a flip in the predicted class). 
+
+## Taxonomy of interpretability (cont)
+- model-specific or model-agnostic? 
+    - Model-specific interpretation tools are limited to specific model classes. The interpretation of regression weights in a linear model is a model-specific interpretation, since -- by definition -- the interpretation of intrinsically interpretable models is always model-specific.
+    - Model-agnostic tools can be used on any machine learning model and are applied after the model has been trained (post hoc). These agnostic methods usually work by analyzing feature input and output pairs.
+
+- local vs global
+    - local: the interpretation method explain an individual prediction. Locally, the prediction might only depend linearly or monotonically on some features, rather than having a complex dependence on them. 
+    - global: entire model behavior. the global level of interpretability is about understanding how the model makes decisions, based on a holistic view of its features and each of the learned components such as weights, other parameters, and structures. Which features are important and what kind of interactions between them take place? Global model interpretability helps to understand the distribution of your target outcome based on the features. 
+        
+## model-agnostic + global (average out the y-hat): PDP (plot of partial dependence; average marginal effect)
+- The partial dependence plot (short PDP or PD plot) shows how the **average** predicted outcome of a machine learning model changes when the i-th feature is changed by marginalizing the predicted outcome over the distribution of all the other features. 
+    - A partial dependence plot can show whether the relationship between the target and a feature is *linear*, *monotonic* or *more complex*. 
+    - for regression: the PDP displays the change of y-hat conditionally on x-ith on average
+    - for classification: the PDP displays the probability for a certain class given different values for feature(s) in i-th
+    
+- example
+
+
+- pros & cons
+    - pros: intuitive and introduce casual interpretation: If the feature for which you computed the PDP is *not correlated* with the other features, then the PDPs perfectly represent how the feature influences the prediction on average. In addition, the relationship shown in the PDP is **causal** for the model because we explicitly model the outcome as a function of the features (but not necessarily for the real world!)
+    - cons:
+        - The realistic maximum number of features in a partial dependence function is two (not the drawback of the method, but the visualization)
+        - Some PD plots do not show the feature distribution.
+        - The assumption of **independence** is the biggest issue with PD plots. It is assumed that the feature(s) for which the partial dependence is computed are not correlated with other features. (Accumulated Local Effect plots or short ALE plots that work with the conditional instead of the marginal distribution.)
+        - Heterogeneous effects might be hidden because PD plots only show the average marginal effects. (individual conditional expectation curves could uneval heterogeneous effects)
+
+## model-agnostic + local (average out the x i-th): SHAP
+- The interpretation of the Shapley value for feature value j is: The value of the j-th feature contributed ϕj to the prediction of this particular instance compared to the average prediction for the dataset. Note that: The Shapley value is *the average contribution* of a feature value to the prediction in different coalitions. The Shapley value is NOT the difference in prediction when we would remove the feature from the model.
+    - for regression
+    - for classification
+
+- example
+
+- pros & cons
