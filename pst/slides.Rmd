@@ -20,7 +20,7 @@ header-includes:
 ## Introduction
 - machine learning: An algorithm trains a model that produces the predictions.
     - We capture the world by collecting data, and abstract it further by learning to predict the data (for the task) with a machine learning model. Interpretability is just another layer on top that helps humans understand.
-![big-picture](/Users/jiatingchen/Downloads/explainable-ml/img/big-picture.png)
+![big-picture](../img/big-picture.png)
 - why interpretability is important?
 - how to interpret: to explain a ML model, you need the trained model, knowledge of the algorithm and the data.
 
@@ -56,6 +56,7 @@ header-includes:
     
 - example
 
+## model-agnostic + global (average out the y-hat): PDP (cont. )
 - pros & cons
     - pros: intuitive and introduce casual interpretation: If the feature for which you computed the PDP is *not correlated* with the other features, then the PDPs perfectly represent how the feature influences the prediction on average. In addition, the relationship shown in the PDP is **causal** for the model because we explicitly model the outcome as a function of the features (but not necessarily for the real world!)
     - cons:
@@ -71,14 +72,14 @@ header-includes:
     - Weight the new samples according to their proximity to the instance of interest.
     - Train a weighted, interpretable model on the dataset with the variations. (local fidelity: The learned model should be a good approximation of the machine learning model predictions locally, but it does not have to be a good global approximation.)
     - Explain the prediction by interpreting the local model.
-![lime](/Users/jiatingchen/Downloads/explainable-ml/img/lime-fitting-1.png)
+![lime](../img/lime-fitting-1.png)
 
 ## model-agnostic + local: LIME (cont.)
 - pros & cons 
     - pros
         - Even if you replace the underlying machine learning model, you can still use the same local, interpretable model for explanation.
         - LIME is one of the few methods that works for tabular data, text and images. 
-            - A regression model can rely on a non-interpretable transformation of some attributes, but the explanations can be created with the original attributes. For instance, A text classifier can rely on abstract word embeddings as features, but the explanation can be based on the presence or absence of words in a sentence. 
+        - A regression model can rely on a non-interpretable transformation of some attributes, but the explanations can be created with the original attributes. For instance, A text classifier can rely on abstract word embeddings as features, but the explanation can be based on the presence or absence of words in a sentence. 
     - cons
         - The correct definition of the neighborhood is a very big, unsolved problem when using LIME with tabular data. (LIME currently uses an exponential smoothing kernel to define the neighborhood. The kernel width determines how large the neighborhood is: A small kernel width means that an instance must be very close to influence the local model, a larger kernel width means that instances that are farther away also influence the model.)
         - Data points are sampled from a Gaussian distribution, ignoring the correlation between features. This can lead to unlikely data points which can then be used to learn local explanation models.
@@ -86,7 +87,7 @@ header-includes:
         
 ## model-agnostic + local (average out the x i-th): Shapley Value
 - Shapley Value: the average marginal contribution of a feature value across all possible coalitions
-    - The interpretation of the Shapley value for feature value j is: The value of the j-th feature contributed ϕj to the prediction of this particular instance compared to the average prediction for the dataset. 
+    - The interpretation of the Shapley value for feature value j is: The value of the j-th feature contributed j to the prediction of this particular instance compared to the average prediction for the dataset. 
     -       Note that: The Shapley value is *the average contribution* of a feature value to the prediction in different coalitions. The Shapley value is NOT the difference in prediction when we would remove the feature from the model.
     - for regression
     - for classification
