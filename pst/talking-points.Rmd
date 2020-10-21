@@ -1,0 +1,13 @@
+---
+title: "talking-points"
+author: "Kristin Chen"
+date: "10/21/2020"
+output: pdf_document
+---
+
+## Introduction
+We capture the world by collecting data, and abstract it further by learning to predict the data (for the task) with a machine learning model. Interpretability is just another layer on top that helps humans understand.
+
+I will use both the terms interpretable and explainable interchangeably.
+
+on the other words, how to interpret: to explain a ML model, we need the trained model, knowledge of the algorithm and the data.

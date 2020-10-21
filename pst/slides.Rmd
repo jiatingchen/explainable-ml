@@ -15,6 +15,8 @@ header-includes:
 - \usepackage{pdflscape}
 - \usepackage{tabu}
 - \usepackage{threeparttable}
+bibliography: explainable-ml.bib
+
 ---
 
 ```{r include=FALSE}
@@ -25,11 +27,11 @@ library(mlr)
 library(dplyr)
 library(iml)
 library(ggplot2)
-library(randomForest)
 library(gridExtra)
 library(viridis)
 library(caret)
 library(e1071)
+library(glmnet)
 
 set.seed(42)
 
@@ -44,15 +46,19 @@ get.cervical.task("../dta")
 ```
 
 ## Introduction
-- machine learning: An algorithm trains a model that produces the predictions.
-    - We capture the world by collecting data, and abstract it further by learning to predict the data (for the task) with a machine learning model. Interpretability is just another layer on top that helps humans understand.
-![big-picture](../img/big-picture.png)
-- why interpretability is important?
-- how to interpret: to explain a ML model, you need the trained model, knowledge of the algorithm and the data.
+- Machine Learning: a set of **methods** that **computers** use to make and improve **predictions** or behaviors based on **data**.
+    - Machine Learning Model: the learned program that maps inputs to predictions.
+![ml](../img/ml.png)
+        - Black Box Model: a system that does not reveal its internal mechanisms (vs. white box model/interpretable model)
 
-## Taxonomy of explanaible methods
+## Introduction (cont.)
+- Interpretable/Explainable Machine Learning: methods and models that make the behavior and predictions of machine learning systems *understandable* to humans.
+![big-picture](../img/big-picture.png)
+- This talk focus on introducing explainable ML methods and tools, or *how* to interpret ML results.
+
+## Taxonomy of explanaible ML methods
 - intrinsic vs post-hoc: interpretability is achieved 
-    - intrinsic: by restricting the complexity of the machine learning model that are considered interpretable due to their simple structure, such as short decision trees or sparse linear models. 
+    - intrinsic: by restricting the complexity of the machine learning model that are considered interpretable due to their simple structure, such as short decision trees or sparse linear models. Inherently nterpretable models are models with (learned) structures and learned parameters which can be assigned a certain interpretation. 
     - post-hoc: by applying methods that analyze the model after training
     
 - results of interpretation methods:
@@ -61,7 +67,7 @@ get.cervical.task("../dta")
     - Model internals: The interpretation of intrinsically interpretable models, such as weights in linear models or the learned tree structure (the features and thresholds used for the splits) of decision trees.
     - data point: includes all methods that return data points (already existent or newly created) to make a model interpretable, i.e. counterfactual explanations, which refers to explain the prediction of a data instance, the method finds a similar data point by changing some of the features for which the predicted outcome changes in a relevant way (e.g. a flip in the predicted class). 
 
-## Taxonomy of explanaible methods (cont)
+## Taxonomy of explanaible ML methods (cont.)
 - model-specific or model-agnostic? 
     - Model-specific interpretation tools are limited to specific model classes. The interpretation of regression weights in a linear model is a model-specific interpretation, since -- by definition -- the interpretation of intrinsically interpretable models is always model-specific.
     - Model-agnostic tools can be used on any machine learning model and are applied after the model has been trained (post hoc). These agnostic methods usually work by analyzing feature input and output pairs.
@@ -69,9 +75,22 @@ get.cervical.task("../dta")
 - local vs global
     - local: the interpretation method explain an individual prediction. Locally, the prediction might only depend linearly or monotonically on some features, rather than having a complex dependence on them. 
     - global: entire model behavior. the global level of interpretability is about understanding how the model makes decisions, based on a holistic view of its features and each of the learned components such as weights, other parameters, and structures. Which features are important and what kind of interactions between them take place? Global model interpretability helps to understand the distribution of your target outcome based on the features. 
+    
+## Taxonomy of explanaible ML methods (cont.)
+
+- analyze components of interpretable models: component analysis is always model-specific, because it is tied to the structure of the model
+- analyze components of model complex models: feature map of CNN, minimal depth distribution and the Gini importance of random forest could be used to qualify the feature importance
+
+summary of drawbacks of mdoel-specific interpretable method: it is tied to specific model, and it does not combine well with the common model selection approach in ML, where on usually searches over a large class of different ML models via cross-validation
+
+
+- study sensitivity of an ML model, model-agnostic and work by manupulating input data and analyzing the respective model prediction. 
+    - explain individual predictions: Shaply value; counterfactual explanations: explain predictions in the form of what-if scenarios.
+    - example global behavior [@zhang2017]
+    
 
 ## Example dataset
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 summary(bike) #- bike rentals (regression)
 summary(cervical) #- risk factors for cervical cancer (classification)
 ```
@@ -159,7 +178,7 @@ pd$plot() +
 
 ## Model-agnostic + Local: LIME (example)
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ntree = 100
 bike.train.resid = factor(resid(lm(cnt ~ days_since_2011, data = bike)) > 0, levels = c(FALSE, TRUE), labels = c('below', 'above'))
 bike.train.x = bike[names(bike) != 'cnt']
@@ -199,7 +218,8 @@ grid.arrange(a, b, ncol = 1)
     - The instability of the explanations. (vs Shapley Value)
     
 ## Model-agnostic + Local: Shapley Value
-- Shapley Value: the average marginal contribution of a feature value across all possible coalitions
+- Shapley Value: collaborative game theory, provides an answer on how to fairly share a payout among the players of a collaborative game. The collaborative game idea can be applied to ML where features (i.e., the players) collaborative to make a prediction (i.e. the payout)
+    - the average marginal contribution of a feature value across all possible coalitions
     - The interpretation of the Shapley value for feature value j is: The value of the j-th feature contributed j to the prediction of this particular instance compared to the average prediction for the dataset. 
     -       Note that: The Shapley value is *the average contribution* of a feature value to the prediction in different coalitions. The Shapley value is NOT the difference in prediction when we would remove the feature from the model.
     - for regression
@@ -207,7 +227,7 @@ grid.arrange(a, b, ncol = 1)
     
 ## Model-agnostic + Local: Shapley Value (bike rental example)
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 set.seed(42)
 ntree = 30
 bike.train.x = bike[names(bike) != 'cnt']
@@ -230,7 +250,7 @@ plot(shapley2) +  scale_y_continuous("Feature value contribution") +
 
 ## Model-agnostic + Local: Shapley Value (cervical example)
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 set.seed(42)
 ntree = 30
 cervical.x = cervical[names(cervical) != 'Biopsy']
