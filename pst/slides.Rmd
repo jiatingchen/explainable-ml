@@ -15,6 +15,8 @@ header-includes:
 - \usepackage{pdflscape}
 - \usepackage{tabu}
 - \usepackage{threeparttable}
+bibliography: explainable-ml.bib
+
 ---
 
 ```{r include=FALSE}
@@ -25,12 +27,13 @@ library(mlr)
 library(dplyr)
 library(iml)
 library(ggplot2)
-library(randomForest)
 library(gridExtra)
 library(viridis)
 library(caret)
 library(e1071)
 library(pdp)
+library(glmnet)
+
 set.seed(42)
 
 source("../src/R/utils.R")
@@ -51,8 +54,8 @@ logit2prob <- function(logit){
 - machine learning: An algorithm trains a model that produces the predictions.
     - explainable ml: We capture the world by collecting data, and abstract it further by learning to predict the data (for the task) with a machine learning model. Interpretability/Explainability is just another layer on top that helps humans understand.
 ![big-picture](../img/big-picture.png)
-## Terminology
 
+## Terminology
 ![terminology](../img/terminology.png)
 
 ```{r eval=FALSE, include=FALSE}
@@ -82,7 +85,7 @@ logit2prob <- function(logit){
 
 ## Example dataset for regression
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 summary(bike) 
 ```
 
@@ -233,6 +236,7 @@ gridExtra::grid.arrange(p3, p4, ncol = 2)
   - Train a **weighted, interpretable model** on the dataset with the variations.
   - Explain the prediction by interpreting the local model.
 ![lime](../img/lime-fitting-1.png)
+
 ```{r eval=FALSE, include=FALSE}
 # - Surrogate models are trained to approximate the predictions of the underlying black box model. LIME tests what happens to the predictions when you give variations of your data into the machine learning model. LIME generates a new dataset consisting of permuted samples and the corresponding predictions of the black box model. On this new dataset LIME then trains an interpretable model, which is weighted by the proximity of the sampled instances to the instance of interest. The interpretable model can be anything from the interpretable models chapter, for example Lasso or a decision tree. 
 # 
@@ -252,7 +256,7 @@ gridExtra::grid.arrange(p3, p4, ncol = 2)
 
 ## Model-agnostic + Local: LIME (bike rental example)
 
-```{r eval=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ntree = 100
 bike.train.resid = factor(resid(lm(cnt ~ days_since_2011, data = bike)) > 0, levels = c(FALSE, TRUE), labels = c('below', 'above'))
 bike.train.x = bike[names(bike) != 'cnt']
@@ -312,6 +316,7 @@ grid.arrange(a, b, ncol = 1)
     # -       Note that: The Shapley value is *the average contribution* of a feature value to the prediction in different coalitions. The Shapley value is NOT the difference in prediction when we would remove the feature from the model.
 ```
 
+
 ## Model-agnostic + Local: Shapley Value (bike rental example)
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -338,10 +343,10 @@ plot(shapley2) +  scale_y_continuous("Feature value contribution") +
 ## Model-agnostic + Local: Shapley Value (Titanic example)
 - to be added 
 
+
 ## model-agnostic + Local: Shapley Value (pros & cons)
 - pros
     - the average prediction is *fairly distributed* among the feature values of the instance
-
 - cons
   - An exact computation of the Shapley value is computationally expensive because there are 2k possible coalitions of the feature values and the "absence" of a feature has to be simulated by drawing random instances, which increases the variance for the estimate of the Shapley values estimation. 
   - Explanations created with the Shapley value method always use all the features, which is not for sparse explanations (explanations that contain few features). 
